@@ -1,4 +1,4 @@
-import type { Coordinates, MapPoint } from '../types';
+import type { Coordinates, MapPoint, RescueZone } from '../types';
 
 const degreesToRadians = (degrees: number) => (degrees * Math.PI) / 180;
 
@@ -38,11 +38,18 @@ export const findNearestMapPoint = (location: Coordinates, points: MapPoint[]) =
     }))
     .sort((a, b) => a.distanceMeters - b.distanceMeters)[0];
 
-export const estimateRescueZone = (location: Coordinates, points: MapPoint[]) => {
+export const estimateRescueZone = (
+  location: Coordinates,
+  points: MapPoint[],
+  rescueZones: RescueZone[] = [],
+) => {
+  const zonesById = new Map(rescueZones.map((zone) => [zone.id, zone]));
   const nearestWithZone = points
-    .filter((point) => point.zone)
+    .filter((point) => point.zone_id || point.zone)
     .map((point) => ({
-      zone: point.zone as string,
+      zone: point.zone_id
+        ? `Zone ${point.zone_id}: ${zonesById.get(point.zone_id)?.name ?? point.zone_id}`
+        : (point.zone as string),
       distanceMeters: distanceInMeters(location, {
         latitude: point.latitude,
         longitude: point.longitude,

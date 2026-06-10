@@ -1,7 +1,22 @@
 import L from 'leaflet';
 import { useEffect } from 'react';
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvents } from 'react-leaflet';
-import type { Coordinates, IncidentMarker, MapPoint, MapPointCategory } from '../types';
+import type { GeoJsonObject } from 'geojson';
+import {
+  GeoJSON,
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+  useMapEvents,
+} from 'react-leaflet';
+import type {
+  Coordinates,
+  IncidentMarker,
+  MapPoint,
+  MapPointCategory,
+  RescueZone,
+} from '../types';
 
 const lakeCenter: [number, number] = [41.307, -80.764];
 
@@ -88,6 +103,7 @@ const describeMapPointCategory = (point: MapPoint) => {
 
 export function RescueMap({
   mapPoints,
+  rescueZones,
   incidentMarkers,
   userLocation,
   pendingDrop,
@@ -95,12 +111,15 @@ export function RescueMap({
   onDropMarker,
 }: {
   mapPoints: MapPoint[];
+  rescueZones: RescueZone[];
   incidentMarkers: IncidentMarker[];
   userLocation: Coordinates | null;
   pendingDrop: Coordinates | null;
   allowDrop: boolean;
   onDropMarker: (coordinates: Coordinates) => void;
 }) {
+  const zonesById = new Map(rescueZones.map((zone) => [zone.id, zone]));
+
   return (
     <MapContainer center={lakeCenter} zoom={13} scrollWheelZoom className="rescue-map">
       <TileLayer
@@ -110,31 +129,66 @@ export function RescueMap({
       <DropHandler allowDrop={allowDrop} onDropMarker={onDropMarker} />
       <FollowLocation location={userLocation} />
 
-      {mapPoints.map((point) => (
-        <Marker
-          key={point.id}
-          position={[point.latitude, point.longitude]}
-          icon={makeIcon(categoryColors[point.category] ?? categoryColors.other, point.name[0])}
-        >
-          <Popup>
-            <strong>{point.name}</strong>
-            <br />
-            {describeMapPointCategory(point)}
-            {point.zone && (
-              <>
-                <br />
-                Rescue zone {point.zone}
-              </>
-            )}
-            {point.description && (
-              <>
-                <br />
-                {point.description}
-              </>
-            )}
-          </Popup>
-        </Marker>
-      ))}
+      {rescueZones
+        .filter((zone) => zone.geojson)
+        .map((zone) => (
+          <GeoJSON
+            key={zone.id}
+            data={zone.geojson as GeoJsonObject}
+            style={{
+              color: zone.color ?? categoryColors.zone,
+              fillColor: zone.color ?? categoryColors.zone,
+              fillOpacity: 0.12,
+              weight: 2,
+            }}
+          >
+            <Popup>
+              <strong>
+                Zone {zone.id}: {zone.name}
+              </strong>
+              {zone.description && (
+                <>
+                  <br />
+                  {zone.description}
+                </>
+              )}
+            </Popup>
+          </GeoJSON>
+        ))}
+
+      {mapPoints.map((point) => {
+        const zone = point.zone_id ? zonesById.get(point.zone_id) : undefined;
+        const markerColor =
+          point.category === 'zone' && zone?.color
+            ? zone.color
+            : categoryColors[point.category] ?? categoryColors.other;
+
+        return (
+          <Marker
+            key={point.id}
+            position={[point.latitude, point.longitude]}
+            icon={makeIcon(markerColor, point.name[0])}
+          >
+            <Popup>
+              <strong>{point.name}</strong>
+              <br />
+              {describeMapPointCategory(point)}
+              {(zone || point.zone) && (
+                <>
+                  <br />
+                  Rescue zone {zone ? `${zone.id}: ${zone.name}` : point.zone}
+                </>
+              )}
+              {point.description && (
+                <>
+                  <br />
+                  {point.description}
+                </>
+              )}
+            </Popup>
+          </Marker>
+        );
+      })}
 
       {incidentMarkers.map((marker) => (
         <Marker

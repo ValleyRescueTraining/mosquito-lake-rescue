@@ -27,6 +27,8 @@ future live tracking, PWA deployment, photo attachments, and search-area drawing
 - Create clean project structure.
 - Add TypeScript, Vite, React, Leaflet, and Supabase client setup.
 - Load `map_points` from Supabase.
+- Load `rescue_zones` from Supabase and allow `map_points.zone_id` references.
+- Render future rescue zone polygon boundaries from `rescue_zones.geojson`.
 - Filter public map points by `public_visible`.
 - Build public interface:
   - Call 911 button.
@@ -41,6 +43,12 @@ future live tracking, PWA deployment, photo attachments, and search-area drawing
   - Store TC911 run number as `tc911_run_number`.
   - Capture water rescue incident type.
   - Capture incident command notes.
+  - Manage a realistic Mosquito Lake resource board with Boat 11, Boat 78, and
+    Boat 38 as the only primary boat resources.
+  - Support optional small-team roles without requiring full ICS staffing.
+  - Create and track search assignments.
+  - Capture evidence and clues.
+  - Write an append-only incident activity log for timeline and later exports.
   - Support multiple incidents.
   - Use statuses: `Active`, `Standby`, `Closed`.
   - Tap/drop marker workflow.

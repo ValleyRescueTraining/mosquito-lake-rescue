@@ -6,14 +6,16 @@ import {
   formatDistance,
   getCurrentPosition,
 } from '../lib/geo';
-import type { Coordinates, MapPoint } from '../types';
+import type { Coordinates, MapPoint, RescueZone } from '../types';
 
 export function PublicInterface({
   mapPoints,
+  rescueZones,
   userLocation,
   onLocationFound,
 }: {
   mapPoints: MapPoint[];
+  rescueZones: RescueZone[];
   userLocation: Coordinates | null;
   onLocationFound: (location: Coordinates) => void;
 }) {
@@ -28,7 +30,9 @@ export function PublicInterface({
     () => (userLocation ? findNearestMapPoint(userLocation, mapPoints) : undefined),
     [mapPoints, userLocation],
   );
-  const zone = userLocation ? estimateRescueZone(userLocation, mapPoints) : 'Waiting for GPS';
+  const zone = userLocation
+    ? estimateRescueZone(userLocation, mapPoints, rescueZones)
+    : 'Waiting for GPS';
   const locationText = userLocation ? buildLocationText(userLocation, zone, nearest) : '';
   const publicMapLink =
     userLocation && typeof window !== 'undefined'

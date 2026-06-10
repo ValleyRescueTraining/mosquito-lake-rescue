@@ -4,8 +4,8 @@ import { PublicInterface } from './components/PublicInterface';
 import { ResponderInterface } from './components/ResponderInterface';
 import { RescueMap } from './components/RescueMap';
 import { isSupabaseConfigured } from './lib/supabase';
-import { loadMapPoints } from './services/mapPoints';
-import type { Coordinates, IncidentMarker, InterfaceMode, MapPoint } from './types';
+import { loadMapPoints, loadRescueZones } from './services/mapPoints';
+import type { Coordinates, IncidentMarker, InterfaceMode, MapPoint, RescueZone } from './types';
 
 const modes: Array<{ id: InterfaceMode; label: string }> = [
   { id: 'public', label: 'Public' },
@@ -16,6 +16,7 @@ const modes: Array<{ id: InterfaceMode; label: string }> = [
 export const App = () => {
   const [mode, setMode] = useState<InterfaceMode>('public');
   const [mapPoints, setMapPoints] = useState<MapPoint[]>([]);
+  const [rescueZones, setRescueZones] = useState<RescueZone[]>([]);
   const [incidentMarkers, setIncidentMarkers] = useState<IncidentMarker[]>([]);
   const [userLocation, setUserLocation] = useState<Coordinates | null>(null);
   const [pendingDrop, setPendingDrop] = useState<Coordinates | null>(null);
@@ -36,6 +37,12 @@ export const App = () => {
       .then(setMapPoints)
       .catch((error: Error) => setMapError(error.message));
   }, [mode]);
+
+  useEffect(() => {
+    loadRescueZones()
+      .then(setRescueZones)
+      .catch((error: Error) => setMapError(error.message));
+  }, []);
 
   const visibleMapPoints = useMemo(
     () => (mode === 'public' ? mapPoints.filter((point) => point.public_visible) : mapPoints),
@@ -78,6 +85,7 @@ export const App = () => {
         <section className="map-panel" aria-label="Mosquito Lake map">
           <RescueMap
             mapPoints={visibleMapPoints}
+            rescueZones={rescueZones}
             incidentMarkers={incidentMarkers}
             userLocation={userLocation}
             pendingDrop={pendingDrop}
@@ -91,12 +99,14 @@ export const App = () => {
           {mode === 'public' && (
             <PublicInterface
               mapPoints={visibleMapPoints}
+              rescueZones={rescueZones}
               userLocation={userLocation}
               onLocationFound={setUserLocation}
             />
           )}
           {mode === 'responder' && (
             <ResponderInterface
+              rescueZones={rescueZones}
               pendingDrop={pendingDrop}
               onPendingDropChange={setPendingDrop}
               onMarkersLoaded={setIncidentMarkers}
@@ -106,7 +116,11 @@ export const App = () => {
             />
           )}
           {mode === 'admin' && (
-            <AdminInterface mapPoints={mapPoints} onMapPointsChange={setMapPoints} />
+            <AdminInterface
+              mapPoints={mapPoints}
+              rescueZones={rescueZones}
+              onMapPointsChange={setMapPoints}
+            />
           )}
         </section>
       </main>

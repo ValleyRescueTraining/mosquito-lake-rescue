@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { MapPoint } from '../types';
+import type { MapPoint, RescueZone } from '../types';
 
 export const loadMapPoints = async (publicOnly = false): Promise<MapPoint[]> => {
   if (!supabase) {
@@ -37,4 +37,22 @@ export const saveMapPoint = async (point: Partial<MapPoint>) => {
   }
 
   return data as MapPoint;
+};
+
+export const loadRescueZones = async (): Promise<RescueZone[]> => {
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('rescue_zones')
+    .select('*')
+    .eq('active', true)
+    .order('display_order', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as RescueZone[];
 };

@@ -16,9 +16,18 @@ Implemented foundation:
   number field, water rescue incident type, incident command notes, map tap/drop
   marker workflow, notes, closeout notes, searchable archive support, and
   shareable public map links.
+- Realistic resource board for Mosquito Lake operations using Boat 11, Boat 78,
+  Boat 38, command, dive, sonar, EMS, and shore search resources.
+- Optional role assignments for command, operations, boat, dive, sonar, and
+  support roles. No role is mandatory.
+- Search assignments, evidence/clue tracking, and an append-only activity log
+  that will later power timeline, printable summaries, ICS-214 style export, and
+  after-action reports.
 - Admin interface scaffold for adding map points and managing visibility flags.
 - Real interactive Leaflet map using OpenStreetMap tiles.
 - Supabase client setup for `map_points`, `incidents`, and `incident_markers`.
+- Dedicated `rescue_zones` table seeded with Zones A-F; map points can reference
+  zones by `zone_id` while future polygon boundaries live in `rescue_zones.geojson`.
 - PWA manifest and service worker foundation for installable/offline support.
 
 ## Local Setup
@@ -67,6 +76,12 @@ Water rescue incident types are:
 - Medical emergency
 - Recovery operation
 - Search only
+
+Primary boat resources are limited to:
+
+- Boat 11 / Bazetta Fire
+- Boat 78 / Trumbull County Water Rescue Team / EMA
+- Boat 38 / Mecca Fire
 
 ## Deployment Targets
 
