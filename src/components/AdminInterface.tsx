@@ -1,6 +1,11 @@
 import { useEffect, useState } from 'react';
 import { saveMapPoint } from '../services/mapPoints';
-import { loadAgencies, loadResources, saveAgency, saveResource } from '../services/operations';
+import {
+  loadAdminResources,
+  loadAgencies,
+  saveAgency,
+  saveResource,
+} from '../services/operations';
 import type {
   Agency,
   MapPoint,
@@ -35,7 +40,19 @@ const emptyPoint = {
   visible_from_water: true,
 };
 
-const resourceTypes: ResourceType[] = ['Boat', 'Command', 'Diver', 'Sonar', 'EMS', 'Search'];
+const resourceTypes: ResourceType[] = [
+  'Boat',
+  'Command',
+  'Diver',
+  'Sonar',
+  'EMS',
+  'Search',
+  'Law Enforcement',
+  'ODNR',
+  'Drone',
+  'Command Vehicle',
+  'Support',
+];
 const resourceStatuses: ResourceStatus[] = [
   'Available',
   'Assigned',
@@ -52,6 +69,7 @@ const emptyResource = {
   agency: '',
   resource_type: 'Boat' as ResourceType,
   status: 'Available' as ResourceStatus,
+  active: true,
   notes: '',
 };
 
@@ -79,7 +97,7 @@ export function AdminInterface({
   const [status, setStatus] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([loadResources(), loadAgencies()])
+    Promise.all([loadAdminResources(), loadAgencies()])
       .then(([nextResources, nextAgencies]) => {
         setResources(nextResources);
         setAgencies(nextAgencies);
@@ -126,11 +144,37 @@ export function AdminInterface({
         agency: resourceForm.agency,
         resource_type: resourceForm.resource_type,
         status: resourceForm.status,
+        active: resourceForm.active,
         notes: resourceForm.notes || null,
       });
       setResources([saved, ...resources.filter((resource) => resource.id !== saved.id)]);
       setResourceForm(emptyResource);
       setStatus('Resource saved.');
+    } catch (error) {
+      setStatus((error as Error).message);
+    }
+  };
+
+  const handleEditResource = (resource: Resource) => {
+    setResourceForm({
+      id: resource.id,
+      name: resource.name,
+      agency: resource.agency,
+      resource_type: resource.resource_type,
+      status: resource.status,
+      active: resource.active,
+      notes: resource.notes ?? '',
+    });
+  };
+
+  const handleToggleResourceActive = async (resource: Resource) => {
+    try {
+      const saved = await saveResource({
+        ...resource,
+        active: !resource.active,
+      });
+      setResources(resources.map((item) => (item.id === saved.id ? saved : item)));
+      setStatus(saved.active ? 'Resource reactivated.' : 'Resource marked inactive.');
     } catch (error) {
       setStatus((error as Error).message);
     }
@@ -289,7 +333,9 @@ export function AdminInterface({
       <section className="action-card">
         <h2>Manage Resources</h2>
         <p className="muted">
-          Primary boats are limited to Boat 11, Boat 78, and Boat 38.
+          Primary seeded boats are Boat 11, Boat 78, and Boat 38. Admins can add
+          mutual aid boats, EMS, law enforcement, ODNR, drones, sonar, dive,
+          shore, command, and support resources later.
         </p>
         <label>
           Resource id
@@ -354,6 +400,18 @@ export function AdminInterface({
             </select>
           </label>
         </div>
+        <div className="toggle-row">
+          <label>
+            <input
+              type="checkbox"
+              checked={resourceForm.active}
+              onChange={(event) =>
+                setResourceForm({ ...resourceForm, active: event.target.checked })
+              }
+            />
+            Active resource
+          </label>
+        </div>
         <button className="primary-action" type="button" onClick={handleSaveResource}>
           Save resource
         </button>
@@ -365,6 +423,14 @@ export function AdminInterface({
                 <p>
                   {resource.agency} - {resource.resource_type} - {resource.status}
                 </p>
+              </div>
+              <div className="row-actions">
+                <button type="button" onClick={() => handleEditResource(resource)}>
+                  Edit
+                </button>
+                <button type="button" onClick={() => handleToggleResourceActive(resource)}>
+                  {resource.active ? 'Deactivate' : 'Reactivate'}
+                </button>
               </div>
             </article>
           ))}

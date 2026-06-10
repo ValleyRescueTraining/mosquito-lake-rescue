@@ -44,7 +44,9 @@ future live tracking, PWA deployment, photo attachments, and search-area drawing
   - Capture water rescue incident type.
   - Capture incident command notes.
   - Manage a realistic Mosquito Lake resource board with Boat 11, Boat 78, and
-    Boat 38 as the only primary boat resources.
+    Boat 38 as primary seeded boat resources.
+  - Allow admins to add mutual aid resources and deactivate/reactivate resources
+    without deleting operational history.
   - Support optional small-team roles without requiring full ICS staffing.
   - Create and track search assignments.
   - Capture evidence and clues.

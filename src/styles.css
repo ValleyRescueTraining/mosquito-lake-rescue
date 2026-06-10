@@ -295,6 +295,25 @@ textarea {
   white-space: nowrap;
 }
 
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.row-actions button {
+  background: #e6f3f5;
+  border: 0;
+  border-radius: 6px;
+  color: #21434a;
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 800;
+  min-height: 34px;
+  padding: 6px 8px;
+}
+
 .chip-grid {
   display: flex;
   flex-wrap: wrap;

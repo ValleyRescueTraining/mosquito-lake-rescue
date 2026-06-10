@@ -65,6 +65,25 @@ export const loadResources = async (): Promise<Resource[]> => {
   return (data ?? []) as Resource[];
 };
 
+export const loadAdminResources = async (): Promise<Resource[]> => {
+  if (!supabase) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from('resources')
+    .select('*')
+    .order('active', { ascending: false })
+    .order('resource_type', { ascending: true })
+    .order('name', { ascending: true });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as Resource[];
+};
+
 export const saveResource = async (resource: Partial<Resource>) => {
   if (!supabase) {
     throw new Error('Supabase is not configured.');

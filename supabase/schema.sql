@@ -185,6 +185,7 @@ create table if not exists public.resources (
   agency text not null,
   resource_type text not null,
   status text not null default 'Available',
+  active boolean not null default true,
   current_incident_id uuid references public.incidents (id) on delete set null,
   assigned_zone_id text references public.rescue_zones (id),
   assigned_task_id uuid,
@@ -204,31 +205,44 @@ create table if not exists public.resources (
     )
   ),
   constraint resources_type_check check (
-    resource_type in ('Boat', 'Command', 'Diver', 'Sonar', 'EMS', 'Search')
+    resource_type in (
+      'Boat',
+      'Command',
+      'Diver',
+      'Sonar',
+      'EMS',
+      'Search',
+      'Law Enforcement',
+      'ODNR',
+      'Drone',
+      'Command Vehicle',
+      'Support'
+    )
   )
 );
 
-insert into public.resources (id, name, agency, resource_type, status)
+alter table public.resources
+  add column if not exists active boolean not null default true;
+
+insert into public.resources (id, name, agency, resource_type, status, active)
 values
-  ('boat-11', 'Boat 11', 'Bazetta Fire', 'Boat', 'Available'),
-  ('boat-78', 'Boat 78', 'TCWRT-EMA', 'Boat', 'Available'),
-  ('boat-38', 'Boat 38', 'Mecca Fire', 'Boat', 'Available'),
-  ('command-post', 'Command Post', 'Incident Command', 'Command', 'Available'),
-  ('dive-team-1', 'Dive Team 1', 'TCWRT', 'Diver', 'Available'),
-  ('sonar-team-1', 'Sonar Team 1', 'TCWRT', 'Sonar', 'Available'),
-  ('medical-group', 'Medical Group', 'Mutual Aid EMS', 'EMS', 'Available'),
-  ('shore-team-1', 'Shore Team 1', 'Mutual Aid', 'Search', 'Available')
+  ('boat-11', 'Boat 11', 'Bazetta Fire', 'Boat', 'Available', true),
+  ('boat-78', 'Boat 78', 'TCWRT-EMA', 'Boat', 'Available', true),
+  ('boat-38', 'Boat 38', 'Mecca Fire', 'Boat', 'Available', true),
+  ('command-post', 'Command Post', 'Incident Command', 'Command', 'Available', true),
+  ('dive-team-1', 'Dive Team 1', 'TCWRT', 'Diver', 'Available', true),
+  ('sonar-team-1', 'Sonar Team 1', 'TCWRT', 'Sonar', 'Available', true),
+  ('medical-group', 'Medical Group', 'Mutual Aid EMS', 'EMS', 'Available', true),
+  ('shore-team-1', 'Shore Team 1', 'Mutual Aid', 'Search', 'Available', true)
 on conflict (id) do update
 set
   name = excluded.name,
   agency = excluded.agency,
   resource_type = excluded.resource_type,
+  active = true,
   updated_at = now();
 
-delete from public.resources
-where resource_type = 'Boat'
-  and id not in ('boat-11', 'boat-78', 'boat-38');
-
+create index if not exists resources_active_idx on public.resources (active);
 create index if not exists resources_status_idx on public.resources (status);
 create index if not exists resources_current_incident_id_idx
   on public.resources (current_incident_id);

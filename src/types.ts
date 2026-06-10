@@ -80,7 +80,18 @@ export type Agency = {
   updated_at?: string | null;
 };
 
-export type ResourceType = 'Boat' | 'Command' | 'Diver' | 'Sonar' | 'EMS' | 'Search';
+export type ResourceType =
+  | 'Boat'
+  | 'Command'
+  | 'Diver'
+  | 'Sonar'
+  | 'EMS'
+  | 'Search'
+  | 'Law Enforcement'
+  | 'ODNR'
+  | 'Drone'
+  | 'Command Vehicle'
+  | 'Support';
 
 export type ResourceStatus =
   | 'Available'
@@ -97,6 +108,7 @@ export type Resource = {
   agency: string;
   resource_type: ResourceType;
   status: ResourceStatus;
+  active: boolean;
   current_incident_id?: string | null;
   assigned_zone_id?: string | null;
   assigned_task_id?: string | null;

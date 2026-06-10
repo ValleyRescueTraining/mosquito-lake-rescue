@@ -18,6 +18,8 @@ Implemented foundation:
   shareable public map links.
 - Realistic resource board for Mosquito Lake operations using Boat 11, Boat 78,
   Boat 38, command, dive, sonar, EMS, and shore search resources.
+- Admins can add additional mutual aid resources later and mark resources
+  inactive instead of deleting them.
 - Optional role assignments for command, operations, boat, dive, sonar, and
   support roles. No role is mandatory.
 - Search assignments, evidence/clue tracking, and an append-only activity log
@@ -77,11 +79,13 @@ Water rescue incident types are:
 - Recovery operation
 - Search only
 
-Primary boat resources are limited to:
+Primary seeded boat resources are:
 
 - Boat 11 / Bazetta Fire
 - Boat 78 / Trumbull County Water Rescue Team / EMA
 - Boat 38 / Mecca Fire
+
+Additional mutual aid assets can be added by admins as needed.
 
 ## Deployment Targets
 
