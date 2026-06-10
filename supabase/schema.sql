@@ -367,7 +367,7 @@ create index if not exists search_assignments_resource_idx
 create table if not exists public.evidence_items (
   id uuid primary key default gen_random_uuid(),
   incident_id uuid not null references public.incidents (id) on delete cascade,
-  marker_id uuid references public.incident_markers (id) on delete set null,
+  marker_id text references public.incident_markers (id) on delete set null,
   item_type text not null,
   description text,
   found_by text,
@@ -378,6 +378,40 @@ create table if not exists public.evidence_items (
   custody_notes text,
   created_at timestamptz not null default now()
 );
+
+alter table public.evidence_items
+  add column if not exists marker_id text;
+
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'evidence_items'
+      and column_name = 'marker_id'
+      and data_type <> 'text'
+  ) then
+    alter table public.evidence_items
+      drop constraint if exists evidence_items_marker_id_fkey;
+
+    alter table public.evidence_items
+      alter column marker_id type text using marker_id::text;
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'evidence_items_marker_id_fkey'
+  ) then
+    alter table public.evidence_items
+      add constraint evidence_items_marker_id_fkey
+      foreign key (marker_id)
+      references public.incident_markers (id)
+      on delete set null;
+  end if;
+end $$;
 
 create index if not exists evidence_items_incident_id_idx
   on public.evidence_items (incident_id);
