@@ -1,0 +1,10 @@
+{
+  "name": "Mosquito Lake Rescue Assistant",
+  "short_name": "Lake Rescue",
+  "description": "Mobile-first Mosquito Lake rescue support for public users and responders.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eef6f7",
+  "theme_color": "#0f5c67",
+  "icons": []
+}
