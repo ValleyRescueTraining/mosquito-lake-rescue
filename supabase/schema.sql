@@ -4,6 +4,7 @@ create table if not exists public.incidents (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   incident_type text not null default 'Search only',
+  priority text not null default 'Routine',
   status text not null default 'Active',
   tc911_run_number text,
   command_notes text,
@@ -12,22 +13,12 @@ create table if not exists public.incidents (
   closed_by uuid,
   public_share_token uuid not null default gen_random_uuid(),
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint incidents_status_check check (status in ('Active', 'Standby', 'Closed')),
-  constraint incidents_type_check check (
-    incident_type in (
-      'Missing swimmer',
-      'Missing boater',
-      'Capsized vessel',
-      'Medical emergency',
-      'Recovery operation',
-      'Search only'
-    )
-  )
+  updated_at timestamptz not null default now()
 );
 
 alter table public.incidents
   add column if not exists incident_type text not null default 'Search only',
+  add column if not exists priority text not null default 'Routine',
   add column if not exists command_notes text,
   add column if not exists closeout_notes text,
   add column if not exists closed_at timestamptz,
@@ -37,7 +28,8 @@ alter table public.incidents
 alter table public.incidents
   alter column status type text using status::text,
   alter column status set default 'Active',
-  alter column incident_type set default 'Search only';
+  alter column incident_type set default 'Search only',
+  alter column priority set default 'Routine';
 
 update public.incidents
 set status = case
@@ -58,6 +50,11 @@ where incident_type is null
     'Recovery operation',
     'Search only'
   );
+
+update public.incidents
+set priority = 'Routine'
+where priority is null
+  or priority not in ('Routine', 'Urgent', 'Life Threatening', 'Recovery');
 
 do $$
 begin
@@ -88,8 +85,21 @@ begin
   end if;
 end $$;
 
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'incidents_priority_check'
+  ) then
+    alter table public.incidents
+      add constraint incidents_priority_check check (
+        priority in ('Routine', 'Urgent', 'Life Threatening', 'Recovery')
+      );
+  end if;
+end $$;
+
 create index if not exists incidents_status_idx on public.incidents (status);
 create index if not exists incidents_type_idx on public.incidents (incident_type);
+create index if not exists incidents_priority_idx on public.incidents (priority);
 create index if not exists incidents_tc911_run_number_idx on public.incidents (tc911_run_number);
 create index if not exists incidents_public_share_token_idx on public.incidents (public_share_token);
 create index if not exists incidents_closed_at_idx on public.incidents (closed_at);
@@ -192,37 +202,55 @@ create table if not exists public.resources (
   notes text,
   last_latitude double precision,
   last_longitude double precision,
-  updated_at timestamptz not null default now(),
-  constraint resources_status_check check (
-    status in (
-      'Available',
-      'Assigned',
-      'En Route',
-      'On Scene',
-      'Searching',
-      'Returning',
-      'Out of Service'
-    )
-  ),
-  constraint resources_type_check check (
-    resource_type in (
-      'Boat',
-      'Command',
-      'Diver',
-      'Sonar',
-      'EMS',
-      'Search',
-      'Law Enforcement',
-      'ODNR',
-      'Drone',
-      'Command Vehicle',
-      'Support'
-    )
-  )
+  updated_at timestamptz not null default now()
 );
 
 alter table public.resources
   add column if not exists active boolean not null default true;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'resources_status_check'
+  ) then
+    alter table public.resources
+      add constraint resources_status_check check (
+        status in (
+          'Available',
+          'Assigned',
+          'En Route',
+          'On Scene',
+          'Searching',
+          'Returning',
+          'Out of Service'
+        )
+      );
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'resources_type_check'
+  ) then
+    alter table public.resources
+      add constraint resources_type_check check (
+        resource_type in (
+          'Boat',
+          'Command',
+          'Diver',
+          'Sonar',
+          'EMS',
+          'Search',
+          'Law Enforcement',
+          'ODNR',
+          'Drone',
+          'Command Vehicle',
+          'Support'
+        )
+      );
+  end if;
+end $$;
 
 insert into public.resources (id, name, agency, resource_type, status, active)
 values
@@ -254,10 +282,14 @@ create table if not exists public.search_areas (
   incident_id uuid references public.incidents (id) on delete cascade,
   name text not null,
   geojson jsonb not null,
+  probability_of_area numeric(5,2),
   notes text,
   created_by uuid,
   created_at timestamptz not null default now()
 );
+
+alter table public.search_areas
+  add column if not exists probability_of_area numeric(5,2);
 
 create index if not exists search_areas_incident_id_idx
   on public.search_areas (incident_id);
@@ -276,23 +308,41 @@ create table if not exists public.search_assignments (
   notes text,
   completion_notes text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint search_assignments_type_check check (
-    assignment_type in (
-      'Boat Search',
-      'Shore Search',
-      'Sonar Search',
-      'Dive Assignment',
-      'Medical Standby',
-      'Staging',
-      'Transport',
-      'Other'
-    )
-  ),
-  constraint search_assignments_status_check check (
-    status in ('Assigned', 'In Progress', 'Completed', 'Suspended')
-  )
+  updated_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'search_assignments_type_check'
+  ) then
+    alter table public.search_assignments
+      add constraint search_assignments_type_check check (
+        assignment_type in (
+          'Boat Search',
+          'Shore Search',
+          'Sonar Search',
+          'Dive Assignment',
+          'Medical Standby',
+          'Staging',
+          'Transport',
+          'Other'
+        )
+      );
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'search_assignments_status_check'
+  ) then
+    alter table public.search_assignments
+      add constraint search_assignments_status_check check (
+        status in ('Assigned', 'In Progress', 'Completed', 'Suspended')
+      );
+  end if;
+end $$;
 
 do $$
 begin
@@ -342,23 +392,32 @@ create table if not exists public.incident_role_assignments (
   assigned_person_name text,
   notes text,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now(),
-  constraint incident_role_assignments_role_check check (
-    role_name in (
-      'Incident Commander',
-      'Operations',
-      'Boat Operations',
-      'Dive Operations',
-      'Sonar Operations',
-      'Safety',
-      'Staging',
-      'Medical',
-      'Communications',
-      'Liaison',
-      'PIO'
-    )
-  )
+  updated_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'incident_role_assignments_role_check'
+  ) then
+    alter table public.incident_role_assignments
+      add constraint incident_role_assignments_role_check check (
+        role_name in (
+          'Incident Commander',
+          'Operations',
+          'Boat Operations',
+          'Dive Operations',
+          'Sonar Operations',
+          'Safety',
+          'Staging',
+          'Medical',
+          'Communications',
+          'Liaison',
+          'PIO'
+        )
+      );
+  end if;
+end $$;
 
 create index if not exists incident_role_assignments_incident_id_idx
   on public.incident_role_assignments (incident_id);
@@ -372,6 +431,30 @@ create table if not exists public.incident_activity_log (
   actor_name text,
   created_at timestamptz not null default now()
 );
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_constraint where conname = 'incident_activity_log_action_type_check'
+  ) then
+    alter table public.incident_activity_log
+      add constraint incident_activity_log_action_type_check check (
+        action_type in (
+          'Incident created',
+          'Incident status changed',
+          'Resource assigned',
+          'Resource status changed',
+          'Marker added',
+          'Search task created',
+          'Search task completed',
+          'Evidence/clue added',
+          'Role assigned',
+          'Incident closed',
+          'Notes added'
+        )
+      );
+  end if;
+end $$;
 
 create index if not exists incident_activity_log_incident_id_idx
   on public.incident_activity_log (incident_id);
@@ -395,19 +478,6 @@ create index if not exists responder_locations_incident_id_idx
 
 create index if not exists responder_locations_recorded_at_idx
   on public.responder_locations (recorded_at);
-
-create table if not exists public.search_areas (
-  id uuid primary key default gen_random_uuid(),
-  incident_id uuid references public.incidents (id) on delete cascade,
-  name text not null,
-  geojson jsonb not null,
-  notes text,
-  created_by uuid,
-  created_at timestamptz not null default now()
-);
-
-create index if not exists search_areas_incident_id_idx
-  on public.search_areas (incident_id);
 
 create table if not exists public.offline_sync_queue (
   id uuid primary key default gen_random_uuid(),

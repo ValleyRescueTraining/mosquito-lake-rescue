@@ -32,6 +32,7 @@ import type {
   IncidentActivityLogEntry,
   IncidentMarker,
   IncidentMarkerType,
+  IncidentPriority,
   IncidentRoleAssignment,
   IncidentRoleName,
   IncidentStatus,
@@ -56,6 +57,13 @@ const markerTypes: IncidentMarkerType[] = [
 ];
 
 const incidentStatuses: IncidentStatus[] = ['Active', 'Standby', 'Closed'];
+
+const incidentPriorities: IncidentPriority[] = [
+  'Routine',
+  'Urgent',
+  'Life Threatening',
+  'Recovery',
+];
 
 const incidentTypes: WaterRescueIncidentType[] = [
   'Missing swimmer',
@@ -148,6 +156,7 @@ export function ResponderInterface({
   const [selectedIncidentId, setSelectedIncidentId] = useState('');
   const [incidentName, setIncidentName] = useState('');
   const [incidentType, setIncidentType] = useState<WaterRescueIncidentType>('Search only');
+  const [incidentPriority, setIncidentPriority] = useState<IncidentPriority>('Routine');
   const [tc911RunNumber, setTc911RunNumber] = useState('');
   const [newIncidentCommandNotes, setNewIncidentCommandNotes] = useState('');
   const [commandNotes, setCommandNotes] = useState('');
@@ -257,6 +266,7 @@ export function ResponderInterface({
       const incident = await createIncident({
         name: incidentName.trim(),
         incident_type: incidentType,
+        priority: incidentPriority,
         tc911_run_number: tc911RunNumber.trim() || null,
         command_notes: newIncidentCommandNotes.trim() || null,
       });
@@ -265,6 +275,7 @@ export function ResponderInterface({
       setSelectedIncidentId(incident.id);
       setIncidentName('');
       setIncidentType('Search only');
+      setIncidentPriority('Routine');
       setTc911RunNumber('');
       setNewIncidentCommandNotes('');
       setStatus('Incident created.');
@@ -568,6 +579,9 @@ export function ResponderInterface({
             <p>
               <strong>Type:</strong> {selectedIncident.incident_type}
             </p>
+            <p>
+              <strong>Priority:</strong> {selectedIncident.priority}
+            </p>
           </div>
         )}
 
@@ -616,6 +630,19 @@ export function ResponderInterface({
             onChange={(event) => setTc911RunNumber(event.target.value)}
             placeholder="Assigned by Trumbull County 911"
           />
+        </label>
+        <label>
+          Incident priority
+          <select
+            value={incidentPriority}
+            onChange={(event) => setIncidentPriority(event.target.value as IncidentPriority)}
+          >
+            {incidentPriorities.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Incident command notes

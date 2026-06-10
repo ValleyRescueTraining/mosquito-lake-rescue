@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type {
   Incident,
   IncidentMarker,
+  IncidentPriority,
   IncidentStatus,
   MarkerDraft,
   WaterRescueIncidentType,
@@ -33,6 +34,7 @@ export const loadIncidents = async (includeClosed = false): Promise<Incident[]> 
 export const createIncident = async (incident: {
   name: string;
   incident_type: WaterRescueIncidentType;
+  priority?: IncidentPriority;
   tc911_run_number?: string | null;
   command_notes?: string | null;
 }) => {
@@ -44,6 +46,7 @@ export const createIncident = async (incident: {
     .from('incidents')
     .insert({
       ...incident,
+      priority: incident.priority ?? 'Routine',
       status: 'Active',
     })
     .select()

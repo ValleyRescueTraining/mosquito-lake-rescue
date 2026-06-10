@@ -47,6 +47,8 @@ export type IncidentStatus =
   | 'Standby'
   | 'Closed';
 
+export type IncidentPriority = 'Routine' | 'Urgent' | 'Life Threatening' | 'Recovery';
+
 export type WaterRescueIncidentType =
   | 'Missing swimmer'
   | 'Missing boater'
@@ -60,6 +62,7 @@ export type Incident = {
   name: string;
   status: IncidentStatus;
   incident_type: WaterRescueIncidentType;
+  priority: IncidentPriority;
   tc911_run_number?: string | null;
   command_notes?: string | null;
   closeout_notes?: string | null;
@@ -263,6 +266,7 @@ export type SearchArea = {
   incident_id: string;
   name: string;
   geojson: Record<string, unknown>;
+  probability_of_area?: number | null;
   notes?: string | null;
   created_by?: string | null;
   created_at?: string | null;
