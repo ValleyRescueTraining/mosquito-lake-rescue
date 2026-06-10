@@ -428,7 +428,16 @@ export function ResponderInterface({
         assigned_person_name: roleDraft.assigned_person_name || null,
         notes: roleDraft.notes || null,
       });
-      await logAction(selectedIncidentId, 'Notes added', `${roleDraft.role_name} assigned`);
+      await logAction(
+        selectedIncidentId,
+        'Role assigned',
+        `${roleDraft.role_name} assigned`,
+        {
+          role_name: roleDraft.role_name,
+          assigned_resource_id: roleDraft.assigned_resource_id || null,
+          assigned_person_name: roleDraft.assigned_person_name || null,
+        },
+      );
       setRoleDraft({
         role_name: 'Incident Commander',
         assigned_resource_id: '',

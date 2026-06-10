@@ -199,6 +199,7 @@ export type ActivityActionType =
   | 'Search task created'
   | 'Search task completed'
   | 'Evidence/clue added'
+  | 'Role assigned'
   | 'Incident closed'
   | 'Notes added';
 
